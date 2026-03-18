@@ -2,22 +2,18 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+// 1. Importation de l'interface JWT
+use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
-class User extends Authenticatable
+// 2. Ajout de "implements JWTSubject"
+class User extends Authenticatable implements JWTSubject
 {
-    /** @use HasFactory<UserFactory> */
+    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
@@ -25,21 +21,11 @@ class User extends Authenticatable
         'role'
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -48,7 +34,29 @@ class User extends Authenticatable
         ];
     }
 
-  
+    // --- MÉTHODES OBLIGATOIRES POUR JWT ---
+
+    /**
+     * Récupère l'identifiant qui sera stocké dans le jeton (le ID de l'utilisateur).
+     */
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    /**
+     * Permet d'ajouter des informations personnalisées dans le jeton.
+     * Ici, on ajoute le rôle pour faciliter les vérifications côté Frontend.
+     */
+    public function getJWTCustomClaims()
+    {
+        return [
+            'role' => $this->role,
+        ];
+    }
+
+    // --- RELATIONS ---
+
     public function orders() {
         return $this->hasMany(Order::class);
     }
