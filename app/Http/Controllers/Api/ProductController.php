@@ -2,58 +2,56 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\DTOs\ProductDTO;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreProductRequest;
 use App\Models\Product;
-use App\Models\ProductImage; 
+use App\Models\ProductImage;
+use App\Repositories\ProductRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
-    public function store(Request $request)
+    protected $productRepo;
+
+    public function __construct(ProductRepository $productRepo) {
+        $this->productRepo = $productRepo;
+    }
+   public function store(StoreProductRequest $request)
     {
-      
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'price' => 'required|numeric',
-            'stock_quantity' => 'required|integer',
-            'category_id' => 'required|exists:categories,id',
-            'photos' => 'required|array|max:4', 
-            'photos.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048'
-        ]);
+        
+        $dto = ProductDTO::fromRequest($request);
 
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
+        
+        $product = DB::transaction(function () use ($dto) {
+            
+          
+            $product = Product::create([
+                'name' => $dto->name,
+                'description' => $dto->description,
+                'price' => $dto->price,
+                'stock_quantity' => $dto->stock_quantity,
+                'categorie_id' => $dto->categorie_id,
+            ]);
 
-  
-        $product = Product::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'price' => $request->price,
-            'stock_quantity' => $request->stock_quantity,
-            'category_id' => $request->category_id,
-        ]);
-
-      
-        if ($request->hasFile('photos')) {
-            foreach ($request->file('photos') as $file) {
-              
+           
+            foreach ($dto->photos as $file) {
                 $path = $file->store('products', 'public');
 
-               
                 ProductImage::create([
                     'product_id' => $product->id, 
                     'path' => $path
                 ]);
             }
-        }
 
-        
+            return $product;
+        });
+
         return response()->json([
-            'message' => 'Produit et images enregistrés',
+            'message' => 'Produit et images enregistrés avec succès via DTO',
             'product' => $product->load('images')
         ], 201);
     }
@@ -138,7 +136,7 @@ class ProductController extends Controller
     public function index()
     {
     
-        $products = Product::with(['images', 'category'])->get();
+        $products = $this->productRepo->getAllProducts();
 
         if ($products->isEmpty()) {
             return response()->json([
@@ -157,9 +155,7 @@ class ProductController extends Controller
 public function show($slug)
 {
    
-    $product = Product::with(['images', 'category'])
-        ->where('slug', $slug)
-        ->first();
+    $product = $this->productRepo->getProductBySlug($slug);
 
 
     if (!$product) {

@@ -10,14 +10,14 @@ class product extends Model
 {
   use HasSlug;
 
-    protected $fillable = ['name', 'slug', 'description', 'price', 'stock_quantity', 'category_id'];
+    protected $fillable = ['name', 'slug', 'description', 'price', 'stock_quantity', 'categorie_id'];
 
     public function getSlugOptions() : SlugOptions {
         return SlugOptions::create()->generateSlugsFrom('name')->saveSlugsTo('slug');
     }
 
     public function category() {
-        return $this->belongsTo(Categorie::class);
+        return $this->belongsTo(Categorie::class,'categorie_id');
     }
 
     public function images() {
