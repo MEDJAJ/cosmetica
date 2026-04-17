@@ -227,4 +227,16 @@ public function markAsPrepared($id)
         'order' => $order
     ], 200);
 }
+
+
+
+public function allOrders()
+{
+    // Récupère toutes les commandes avec les infos clients et produits
+    $orders = Order::with(['user', 'items.product'])->latest()->get();
+    
+    return response()->json([
+        'orders' => $orders
+    ], 200);
+}
 }

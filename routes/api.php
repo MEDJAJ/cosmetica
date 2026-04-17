@@ -42,6 +42,7 @@ Route::middleware('auth:api')->group(function () {
    Route::middleware('role:employee')->group(function () {
     Route::put('/orders/{id}/status', [OrderController::class, 'updateStatus']);
     Route::post('/orders/{id}/prepare', [OrderController::class, 'markAsPrepared']);
+    Route::get('/all-orders', [OrderController::class, 'allOrders']);
       });
 
 

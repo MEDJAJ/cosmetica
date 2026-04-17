@@ -11,7 +11,7 @@ class ProductRepository {
         return Product::with(['images', 'category'])->get();
     }
 
-   
+    
     public function getProductBySlug($slug) {
         return Product::with(['images', 'category'])
             ->where('slug', $slug)

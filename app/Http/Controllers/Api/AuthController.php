@@ -23,7 +23,7 @@ class AuthController extends Controller
             'role' => 'required|in:admin,employee,client',
         ]);
 
-        if ($validator->fails()) {
+        if ($validator->fails()){
             return response()->json($validator->errors(), 400);
         }
 
